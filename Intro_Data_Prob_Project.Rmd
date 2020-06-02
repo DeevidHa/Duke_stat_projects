@@ -1,0 +1,91 @@
+---
+title: "Exploring the BRFSS data"
+output: 
+  html_document: 
+    fig_height: 4
+    highlight: pygments
+    theme: spacelab
+---
+
+## Setup
+
+### Load packages
+
+```{r load-packages, message = FALSE}
+library(ggplot2)
+library(dplyr)
+```
+
+### Load data
+
+```{r load-data}
+load("brfss2013.RData")
+```
+
+
+
+* * *
+
+## Part 1: Data
+
+
+BRFSS is an ongoing surveillance system designed to measure behavioural risk factors for the non-institutionalized adult population (18 years of age and older)
+The Behavioral Risk Factor Surveillance System (BRFSS) is a collaborative project between all of the states in the United States (US) and participating US territories and the Centers for Disease Control and Prevention (CDC).
+The BRFSS is administered and supported by CDC's Population Health Surveillance Branch, under the Division of Population Health at the National Center for Chronic Disease Prevention and Health Promotion.  
+
+It's objective is to collect uniform, state-specific data on preventive health practices and risk behaviours that are linked to chronic diseases, injuries, and preventable infectious diseases that affect the adult population.
+
+The data refers to adult citizens (18 years age and older) that gives insights about aspects of their health and all the factors that may involve healthy -and unhealthy practices.
+
+
+Data collection:
+the BRFSS is intented as an observational study with no form of interference, therefore all relationships between the different variables may indicate correlations.
+
+The collected data for the survey stretches across all 50 states plus affiliated US territories including the District of Columbia, Guam, and the Commonwealth of Puerto Rico.
+The survey is generalizble to the US population as the observations and variables are distributed across the individuals background like, ethicity, educational background, income level etc.
+
+In conducting the BRFSS landline telephone survey, interviewers collect data from a randomly selected adult in a household. In conducting the cellular telephone version of the BRFSS questionnaire, interviewers collect data from an adult who participates by using a cellular telephone and resides in private residence or college housing.
+
+
+
+* * *
+
+## Part 2: Research questions
+
+**Research quesion 1:**
+
+**Research quesion 2:**
+
+**Research quesion 3:**
+
+
+* * *
+
+## Part 3: Exploratory data analysis
+
+NOTE: Insert code chunks as needed by clicking on the "Insert a new code chunk" 
+button (green button with orange arrow) above. Make sure that your code is visible
+in the project you submit. Delete this note when before you submit your work.
+
+**Research quesion 1:**
+
+```{r}
+
+```
+
+
+
+**Research quesion 2:**
+
+```{r}
+
+```
+
+
+
+**Research quesion 3:**
+
+```{r}
+
+```
+

@@ -1,0 +1,228 @@
+---
+title: "Modeling and prediction for movies"
+output: 
+  html_document: 
+    fig_height: 4
+    highlight: pygments
+    theme: spacelab
+---
+
+## Setup
+
+### Load packages
+
+```{r load-packages, message = FALSE}
+library(ggplot2)
+library(dplyr)
+library(statsr)
+library(RColorBrewer)
+library(GGally)
+library(gridExtra)
+library(corrplot)
+```
+
+### Load data
+
+Make sure your data and R Markdown files are in the same directory. When loaded
+your data file will be called `movies`. Delete this note when before you submit 
+your work. 
+
+```{r load-data}
+load("movies.Rdata")
+```
+
+* * *
+
+## Part 1: Data
+
+The data set is comprised of 651 randomly sampled movies produced and released before 2016. Therefore, the data connot be used to establish causal relationships between variables of interest. Hence, the nature of this project serves as an observational study due to the random sampling. At first glance, by looking at the timespan of the collected data by "summary(movies$thtr_relyear)" can be generalized to the released movies between 1970 and 2014. 
+potentially revealing biases to look out for are based the data comes from only two sources, rotten tomatoes and IMDB.
+
+* * *
+
+## Part 2: Research question
+
+Is there an association with a movies' rating and its attributions (e.g. genre, runtime) in the given dataset.
+* * *
+
+## Part 3: Exploratory data analysis
+
+set up new dataframe for the variables we are interested in and omit al the "NA" values.
+```{r}
+df <- movies %>%
+  select(imdb_rating, imdb_num_votes, critics_rating, critics_score,
+         audience_score, audience_rating, runtime, genre, 
+         mpaa_rating, best_actor_win, best_actress_win, best_dir_win,
+         title_type, best_pic_nom) %>%
+        na.omit(df)
+```
+Possible measures of popularity are either imdb_rating, audience_score, critics_score -numerical values-. scores like audience_rating and crtitics_rating are deliberately left, as they are categorically variables. 
+```{r}
+p1 <- ggplot(df, aes(x=critics_score)) + geom_histogram(aes(y=..density..),
+      breaks=seq(0,100, by=5), col="black", fill="white") + 
+      geom_density(fill="red", colour="red", alpha=0.3) +
+      labs(x='Critics score', y="")
+
+p2 <- ggplot(df, aes(x=audience_score)) + geom_histogram(aes(y=..density..), 
+      breaks=seq(0,100, by=5), col="black", fill="white") + 
+      geom_density(fill="coral", colour="coral", alpha=0.3) +
+      labs(x="Audience score", y="")  
+
+p3 <- ggplot(df, aes(x=imdb_rating)) + geom_histogram(aes(y=..density..), 
+      breaks=seq(0,10, by=1), col="black", fill="white") + 
+      geom_density(fill="orange", colour="orange", alpha=0.3) +
+      labs(x="IMDB rating", y="")
+
+grid.arrange (p1,p2,p3, nrow = 1, ncol=3, top = "Depedent variables")
+```
+IMDB ratings look the most normal distributed. Hence, we will go take that as depedent variable.
+
+###boxplot
+
+Possible point of interests that could have associations with a rating could be and MPAA ratings and genres distributions and there associated IMDB scores. To observe this, we can visualize both variables in a boxplot.
+To observe imdb and mpaa ratings and each individial category within variables we can visualize both variables.
+```{r}
+df %>%
+  group_by(genre)%>%
+  summarize(count=n())
+```
+
+```{r}
+ggplot(df, aes(x=imdb_rating, y=genre, fill = genre)) + 
+  geom_boxplot() +
+  labs(x="IMDB rating", y="Genres")
+```
+
+```{r}
+df %>%
+  group_by(mpaa_rating) %>%
+  summarize(count=n())
+```
+
+```{r}
+ggplot(df, aes(x=mpaa_rating, y=imdb_rating, fill=mpaa_rating)) +
+       geom_boxplot() +
+       labs(x="Audience score", y="Film rating")
+```
+
+##Scatterplots
+```{r}
+p4 <- ggplot(data = df, aes(x=audience_score, y=imdb_rating,
+      colour=best_actor_win, shape=best_actor_win)) + 
+      geom_point() +
+      labs(title = "Actor won oscar", x="Audience score", 
+      y="IMDB rating") 
+p5 <- ggplot(data = df,aes(x=audience_score, y=imdb_rating, 
+      colour=best_actress_win, shape=best_actress_win)) + 
+      geom_point() +
+      labs(title = "Actress won oscar",x="Audience score", 
+      y="IMDB rating")
+p6 <- ggplot(data = df, aes(x=audience_score, y=imdb_rating, 
+      colour=best_dir_win, shape=best_dir_win)) +
+      geom_point() +
+      labs(title = "Director won oscar", x="Audience score", 
+      y="IMDB rating")
+p7 <- ggplot(data = df, aes(x=runtime, y=imdb_rating)) +
+      geom_jitter() +
+      geom_smooth(method = 'lm', se = FALSE) +
+      labs(x="runtime", y="imdb_rating", 
+      caption ="correlation : 0.181")
+
+grid.arrange(p4,p5,p6,p7, nrow = 2, ncol =2, top = "Scatterplots")
+```
+- There are more outliers in the audience and IMDB rating if the actor, actress and director previously haven't won a oscar.
+
+- The correlation between the IMDB rating and runtime is 0.181, therefore we can conclude that      
+  relationship between the runtime and movie rating is low. Though, it will be concluded in the analysis to see if there are actually effects.
+
+* * *
+## Part 4 : Modeling
+
+Developing a model that best predicts an IMDB rating, A linear regression will be used through backward elimnation with an adjusted R-squared in order to create a parsimonious model and elimnating predictors that are not statistically significant with alpha = 0.05.
+
+imdb_rating, imdb_num_votes, 
+critics_rating, critics_score,
+audience_score, audience_rating, runtime, genre, 
+mpaa_rating, best_actor_win, best_actress_win, best_dir_win, title_type
+```{r}
+m1<-lm(imdb_rating ~ runtime + genre + mpaa_rating + best_actor_win + best_actress_win +  best_dir_win, data = df)
+summary(m1)
+#eliminate best_actor_win
+m2<-lm(imdb_rating ~ runtime + genre + mpaa_rating + best_actress_win + best_dir_win, data = df)
+summary(m2)
+#eliminate best_actress_win
+m3<-lm(imdb_rating ~ runtime + genre + mpaa_rating + best_dir_win, data = df)
+summary(m3)
+```
+##### Final model 
+
+m3 <- lm(imdb_rating ~ runtime + genre + mpaa_rating + best_dir_win,
+         data = df)
+         summary(m3)
+"m3"-model gives us the best predictive model, with an adjusted R-squared of 0.3082. while managing as parsimonious as possible with 4 variables.
+
+##### Interpretation
+The adjusted R-squared is 0.2884 meaning that the model explains 28.84% of the variability in the IMDB rating of a movie. Therfore, the unexplained variability is the complement of (1-0.2884)= 71.16% in the dependent variable. meaning that the variables in the dataset do not have a strong capability to predict an IMDB-ratings.
+
+### Diagnostics
+
+The following conditions must be met to satisfy the multiple regression model:
+
+1. The residuals of the model are nearly normal
+2. The variability of the residuals is nearly constant
+3. The residuals are independent
+4. Each variable is linearly related to the outcome
+
+1. Residuals nearly normal
+```{r}
+hist(m3$residuals, breaks=20, ylim=range(0,100), xlab="Residuals", ylab="",
+     main="Distribution of residuals", col="light blue")
+    qqnorm(m3$residuals, xlim=range(-4, 4), main="Normal Q-Q plot of residuals", col="skyblue")
+    qqline(m3$residuals)
+```
+2. variability is constant
+```{r}
+plot(m3$residuals~m3$fitted, main="Residuals vs. fitted")
+plot(abs(m3$residuals)~m3$fitted, main="Absolute value of residuals vs. fitted")
+```
+3. Residuals are indepdent
+```{r}
+plot(m3$residuals, xlab="Data Collecting Order", ylab="Residuals", cex=.6, col="skyblue")
+abline(0,0)
+```
+4. Each (numerical) variable is linearly related to the outcome
+```{r}
+plot(m3$residuals ~ df$runtime, xlab="Runtime", ylab="Residuals", cex=.6, col="skyblue")
+abline(0,0)
+```
+* * *
+
+
+
+## Part 5: Prediction
+
+A prediction interval is an estimate of an interval in which future observations will fall, with a certain probability (commonly 95%), given what has already been observed. Therefore we will take a random movie from the IMDB database and attempt to predict it's value according to made-up model.
+  Film: Black Panther
+    -IMDB-rating: 7.3
+    -runtime= 134 minutes
+    -best_dir_win= no, 
+    -genre="Action & Adventure",
+    -mpaa_rating="PG-13",
+    
+```{r}
+Blckpntr = data.frame(best_pic_nom="yes", best_pic_win="no", best_dir_win="no", genre="Action & Adventure",mpaa_rating="PG-13",runtime=c(134),top200_box="no")
+
+predict(m3, Blckpntr, interval = "predict")
+```
+The predicted rating of the movie is  6.08, with 95% prediction interval of [4.26, 7.9]. While actual rating of the movie is 7.3 which is within our prediction interval.
+
+* * *
+## Part 6: Conclusion
+
+Given the dataset and it's given variables, the model explains 28.84% of the variation in the rating which is not very high, and for this reason the interval predicted will be wide. The dependent variable is the rating on the Internet movie database, therefore the model rely on the assumption that the movie is rated on this website.  This also means that the model is biased toward movies that are present on IMDB.
+furthermore, in order to predict it better we need more data on attributes instead of critics and audience rating as they are colinnear. variables are implicitly have a relationship with the depdent variable, thus collinear.
+
+
+
+
+
